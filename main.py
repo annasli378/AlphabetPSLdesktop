@@ -17,6 +17,7 @@ class MyApp:
     def __init__(self, root, hch, model):
         self.root = root
         self.root.title("ALFABET POLSKIEGO JĘZYKA MIGOWEGO")
+        self.root.configure(bg="#f0f0f0")
 
         self.alphabet_video = "res/ABC.mp4"
         # TODO do poprawy
@@ -31,16 +32,22 @@ class MyApp:
         self.show_welcome_activity()
 
     def create_widgets(self, hch, model):
+        style = ttk.Style()
+        style.configure("Green.TButton", background="#4CAF50", foreground="white", font=("Arial", 16))
+
         # Welcome Activity #############################################################################################
         mess = "PODAJ SWOJE IMIĘ:"
-        self.label_welcome = ttk.Label(self.frame, text=mess)
-        self.label_welcome.pack(pady=20)
+        self.label_welcome = ttk.Label(self.frame, font=("Arial", 16), text=mess)
+        self.label_welcome.pack(pady=10)
 
-        self.entry_name = ttk.Entry(self.root, width=30)
+        self.entry_name = ttk.Entry(self.root, font=("Arial", 14), width=30)
         self.entry_name.pack(pady=20)
 
-        self.btn_activity1 = ttk.Button(self.frame, text="START", command=self.show_video_activity)
-        self.btn_activity1.pack()
+
+        self.btn_activity1 = ttk.Button(self.frame, text="START", command=self.show_video_activity, style="Green.TButton")
+        self.btn_activity1.pack(pady=40)
+
+
 
         # Display alphabet video ######################################################################################
         self.label_video = ttk.Label(self.frame,
