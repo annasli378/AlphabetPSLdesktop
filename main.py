@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import tkinter.font as tkFont
 from tkinter import *
 from PIL import Image, ImageTk
@@ -20,8 +20,8 @@ class MyApp:
         self.root.configure(bg="#f0f0f0")
 
         self.alphabet_video = "res/ABC.mp4"
-        # TODO do poprawy
-        self.task_list = [7, 13, 6, 9, 14, 16, 8, 18, 21, 12]
+        # TODO do poprawy - losowe
+        self.task_list = [7, 13, 6, 9, 14, 16, 8, 18, 21, 17]
         self.score = 0
 
         self.frame = ttk.Frame(root)
@@ -43,24 +43,23 @@ class MyApp:
         self.entry_name = ttk.Entry(self.root, font=("Arial", 14), width=30)
         self.entry_name.pack(pady=20)
 
-
-        self.btn_activity1 = ttk.Button(self.frame, text="START", command=self.show_video_activity, style="Green.TButton")
+        self.btn_activity1 = ttk.Button(self.frame, text="START", command=self.show_video_activity,
+                                        style="Green.TButton")
         self.btn_activity1.pack(pady=40)
-
-
 
         # Display alphabet video ######################################################################################
         self.label_video = ttk.Label(self.frame,
                                      text="Zapoznaj się z materiałem poniżej, następnie spróbuj odwzorować podane znaki")
         self.label_video.pack(pady=20)
 
+        # TODO
         self.video_label = ttk.Label(self.frame)
         self.video_label.pack(pady=20)
 
+        # https://www.youtube.com/watch?v=0KqQZyrPYQg
+
         self.btn_activity2 = ttk.Button(self.frame, text="ROZPOCZNIJ", command=self.show_camera_activity)
         self.btn_activity2.pack()
-
-
 
         # Classify hands activity ######################################################################################
         self.label_image = ttk.Label(self.frame, text="Pokaż znak do kamery")
@@ -71,7 +70,6 @@ class MyApp:
 
         self.btn_activity3 = ttk.Button(self.frame, text="SPRAWDŹ", command=self.check_name)
         self.btn_activity3.pack()
-
 
     def show_welcome_activity(self):
         self.label_welcome.pack()
@@ -86,19 +84,19 @@ class MyApp:
 
     def show_video_activity(self):
 
+        self.root.geometry("800x800")
+
         self.name = self.entry_name.get()
 
-        if len(self.name) ==0:
+        if len(self.name) == 0:
             self.name = "imię"
+            messagebox.showinfo("Brak imienia", "Domyślnie: imię")
         self.name_code = []
 
         for l in self.name:
             self.name_code.append(self.get_numbers(l))
         print(self.name)
         print(self.name_code)
-        # if not self.name or not self.name.isascii():
-        #     tk.messagebox.showerror("Error", "Please enter a valid name.")
-        #     return
 
         self.label_welcome.pack_forget()
         self.btn_activity1.pack_forget()
@@ -119,7 +117,7 @@ class MyApp:
             ret, frame = self.cap.read()
             if ret:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frame = cv2.resize(frame, (1000, 900))
+                frame = cv2.resize(frame, (700, 600))
                 imgPIL = Image.fromarray(frame)
                 imgtk = ImageTk.PhotoImage(imgPIL)
                 self.video_label.configure(image=imgtk)
@@ -127,7 +125,7 @@ class MyApp:
                 self.video_label.after(10, update_video)
             else:
                 self.cap.release()
-                #self.video_label.pack_forget()
+                # self.video_label.pack_forget()
 
         update_video()
 
@@ -145,7 +143,9 @@ class MyApp:
 
         self.capture_camera()
 
-
+    def pause(self, start_time, pause_time):
+        while (time.time() - start_time < pause_time):
+            pass
 
     def capture_camera(self):
         self.cnt = 0
@@ -164,7 +164,7 @@ class MyApp:
                     min_detection_confidence=0.7,
                     min_tracking_confidence=0.5) as hands:
                 _, img = self.cap.read()
-                img = cv2.resize(img, (1000, 900))
+                img = cv2.resize(img, (700, 600))
                 img.flags.writeable = False
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 results = hands.process(img)
@@ -180,7 +180,7 @@ class MyApp:
 
                     past.append(result)
 
-                    if self.cnt < len(self.task_list)-1:
+                    if self.cnt < len(self.task_list) - 1:
                         if result == self.task_list[self.cnt]:
                             if len(past) > 5:
                                 last_elements = past[-3:]
@@ -190,16 +190,15 @@ class MyApp:
                                     self.cnt += 1
                                     letter = self.get_letters(self.task_list[self.cnt])
                                     self.label_image.config(text=letter)
-                                    self.score +=1
+
+                                    self.score += 1
+                                    self.pause(time.time(), 0.5)
                     else:
-                        #imie
+                        # imie
                         polecenie = "Przeliteruj: " + self.name
                         self.label_image.config(text=polecenie)
                         self.imie.append(result)
                         self.btn_activity3.pack()
-
-
-
 
                     result_name = hch.result_parser(result=result)
 
@@ -224,19 +223,15 @@ class MyApp:
 
                 if time.time() - start_time > 600:
                     self.cnt += 1
-                    if self.cnt < len(self.task_list)-1:
+                    if self.cnt < len(self.task_list) - 1:
                         letter = self.get_letters(self.task_list[self.cnt])
                         self.label_image.config(text=letter)
-
-
 
                 self.image_label.configure(image=imgtk)
                 self.image_label.image = imgtk
                 self.image_label.after(10, select_img)
 
         select_img()
-
-
 
     def get_letters(self, num):
         class_nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -259,13 +254,13 @@ class MyApp:
                        "M", "N", "P", "R", "S", "U", "W", "Y",
                        "Aw", "Bk", "Cm", "Ik", "Om", "Um"]
 
-        letters = ["a", "ą", "b", "c", "ć", "d", "e", "ę","f", "g", "h", "i", "j",
-                       "k", "l", "ł", "m", "n", "ń", "o", "ó", "p", "r", "s", "ś",
-                       "t", "u", "w", "y", "z", "ź", "ż"]
+        letters = ["a", "ą", "b", "c", "ć", "d", "e", "ę", "f", "g", "h", "i", "j",
+                   "k", "l", "ł", "m", "n", "ń", "o", "ó", "p", "r", "s", "ś",
+                   "t", "u", "w", "y", "z", "ź", "ż"]
 
         for index, element in enumerate(letters):
             if element == letter:
-                if element in ["ą","ć","ę", "ł", "ń","ó","ś","ź",]:
+                if element in ["ą", "ć", "ę", "ł", "ń", "ó", "ś", "ź", ]:
                     letter = letters[index - 1]
                 if element in ["ż"]:
                     letter = letters[index - 2]
@@ -275,24 +270,18 @@ class MyApp:
                 letter_num = index
             if letter == "k":
                 letter_num = 3
-            if letter =="g":
-                letter_num =  10
-            if letter =="j":
-                letter_num =  13
-            if letter =="t":
-                letter_num =  11
-            if letter =="z":
+            if letter == "g":
+                letter_num = 10
+            if letter == "j":
+                letter_num = 13
+            if letter == "t":
+                letter_num = 11
+            if letter == "z":
                 letter_num = 9
 
         return letter_num
 
-
-
-
-
-
-
-    def check_answer(self,codes_list, answer_list):
+    def check_answer(self, codes_list, answer_list):
         # znajdx początek:
         start_n = -1
         for idx, elem in enumerate(codes_list):
@@ -300,7 +289,6 @@ class MyApp:
                 start_n = idx
                 print(start_n)
                 break
-
 
         codes_list_cut = codes_list[start_n:-1]
         # clean_codes=[]
@@ -314,44 +302,28 @@ class MyApp:
 
         print(codes_list_cut)
         # sprawdzenie kolejności:
-        idx1=0
-        idx2=0
+        idx1 = 0
+        idx2 = 0
 
         while idx1 < len(codes_list_cut) and idx2 < len(answer_list):
             if codes_list_cut[idx1][0] == answer_list[idx2]:
                 idx2 += 1
             idx1 += 1
         if (idx2 == len(answer_list)):
+            messagebox.showinfo("Wynik", "Imię poprawne!")
             return True
         else:
+            messagebox.showinfo("Wynik", "Coś poszło nie tak: spróbuj ponownie")
             return False
-
-
-
-
-
-
-
-
-
-
-
-    def code_name(self):
-        pass
 
     def check_name(self):
         signs_list = self.name
-        if len(self.name) ==0:
-            # TODO messagebox
-            pass
+        if len(self.name) == 0:
+            messagebox.showinfo("Brak imienia", "Imię nie może być puste")
         else:
             print(self.name)
             print(self.imie)
             print(self.check_answer(self.imie, self.name_code))
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -360,5 +332,5 @@ if __name__ == "__main__":
 
     root = tk.Tk()
     app = MyApp(root, hch, model)
-    root.geometry("1200x800")
+    root.geometry("1000x250")
     root.mainloop()
